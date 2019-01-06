@@ -166,10 +166,11 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
 }
 
 bool Vehicle::selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle targetObject){
-    // assume we only consider the vehicles in front with s less than 50 (and safetyDistance is 20)
-    int minSTarget = this->s + 50;
+    // assume we only consider the vehicles in front with s less than 30
+    int minSTarget = this->s + 30;
     bool foundTargetObject = false;
     Vehicle object;
+    Vehicle targetObject;
 
     for (vector<Vehicle>::iterator it = sensorFusion.begin(); it != sensorFuson.end(); ++it){
         object = *it;

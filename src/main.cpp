@@ -9,6 +9,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "vehicle.h"
+#include "spline.h"
 
 using namespace std;
 
@@ -314,12 +315,91 @@ int main() {
                 refV += 0.224;
             }
 
+            //----------------------------
+            vector<double> spacedWaypointsX;
+            vector<double> spacedWaypointsY;
 
+            double refX = car_x;
+            double refY = car_y;
+            double refYaw = deg2rad(car_yaw);
+
+            if (previousSize < 2){
+                double previousCarX = refX - cos(car_yaw);
+                double previousCarY = refY - sin(car_yaw);
+
+                spacedWaypointsX.push_back(previousCarX);
+                spacedWaypointsX.push_back(refX);
+
+                spacedWaypointsY.push_back(previousCarY);
+                spacedWaypointsY.push_back(refY);
+            }
+            else {
+                refX = previous_path_x[previousSize - 1];
+                refY = previous_path_y[previousSize - 1];
+
+                double previousRefX = previous_path_x[previousSize - 2];
+                double previousRefY = previous_path_y[previousSize - 2];
+
+                refYaw = atan2(refY - previousRefY, refX - previousRefX);
+
+                spacedWaypointsX.push_back(previousRefX);
+                spacedWaypointsX.push_back(refX);
+
+                spacedWaypointsY.push_back(previousRefY);
+                spacedWaypointsY.push_back(refY);
+            }
+
+            vector<double> nextWaypoint0 = getXY(car_s+30, 4*lane+2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            vector<double> nextWaypoint1 = getXY(car_s+60, 4*lane+2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+            vector<double> nextWaypoint2 = getXY(car_s+90, 4*lane+2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
+
+            spacedWaypointsX.push_back(nextWaypoint0[0]);
+            spacedWaypointsX.push_back(nextWaypoint1[1]);
+            spacedWaypointsX.push_back(nextWaypoint2[2]);
+            spacedWaypointsY.push_back(nextWaypoint0[0]);
+            spacedWaypointsY.push_back(nextWaypoint1[1]);
+            spacedWaypointsY.push_back(nextWaypoint2[2]);
+
+            for (size_t i = 0; i < spacedWaypointsX.size(); i++){
+                spacedWaypointsX[i] = (spacedWaypointsX[i] - refX) * cos(-refYaw) - (spacedWaypointsY - refY) * sin(-refYaw);
+                spacedWaypointsY[i] = (spacedWaypointsX[i] - refX) * sin(-refYaw) + (spacedWaypointsY - refY) * cos(-refYaw);
+            }
+
+            //-------------------------------------
+            tk::spline spline;
+            spline.set_points(spacedWaypointsX, spacedWaypointsY);
 
           	json msgJson;
 
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
+
+            //first add previous into points
+            for (size_t i = 0; i < previousSize; i++){
+                next_x_vals.push_back(previous_path_x[i]);
+                next_y_vals.push_back(previous_path_y[i]);
+            }
+
+            //calculate target point
+            float targetX = 30.0;
+            float targetY = spline(targetX);
+            float targetDistance = sqrt(targetX * targetX + targetY * targetY);
+            float n = targetDistance/(0.02 * refV / 2.24);
+            float pointAdd = 0.0;
+
+            //calculate points in front
+            for (size_t i = 0; i <= 30 - previousSize; i++){
+                float pointX = pointAdd + targetX/n;
+                float pointY = spline(pointX);
+                pointAdd = pointX;
+                float xRef = pointX;
+                float yRef = pointY;
+                pointX = xRef * cos(refYaw) - yRef * sin(refYaw);
+                pointY = xRef * sin(refYaw) + yRef * cos(refYaw);
+
+                next_x_vals.push_back(pointX);
+                next_y_vals.push_back(pointY);
+            }
 
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
