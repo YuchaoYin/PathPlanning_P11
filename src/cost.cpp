@@ -1,6 +1,10 @@
 #include "cost.h"
 #include <math.h>
 #include <iterator>
+#include <vector>
+#include <string>
+
+using namespace std;
 
 float calculateCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
     float cost = 0.0;
@@ -15,15 +19,15 @@ float calculateCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion,
     return cost;
 }
 
-float collisionCost(const Vehicle &vehicle, const Vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
+float collisionCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
     //consider only lane change
     //define safety area
     float minSafety = vehicle.s - 10.0;
     float maxSafety = vehicle.s + 10.0;
-
+    Vehicle object;
     if (trajectory[1].state == "laneChangeRight" || trajectory[1].state == "laneChangeLeft" ){
         int targetLane = trajectory[1].l;
-        for (vector<Vehicle>::const_iterator it = sensorFusion.begin(); it != sensorFuson.end(); ++it){
+        for (vector<Vehicle>::const_iterator it = sensorFusion.begin(); it != sensorFusion.end(); ++it){
             object = *it;
             if (object.l == targetLane && object.s > minSafety && object.s < maxSafety){
                 return 1.;
@@ -59,17 +63,17 @@ float collisionSpeed(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion
 
 }
 
-float laneSpeed(const Vehicle &Vehicle, const vector<Vehicle> &sensorFusion, int l){
+float laneSpeed(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, int l){
     // assume we only consider the vehicles in front with s less than 30
-    int minSTarget = this->s + 30;
+    int minSTarget = vehicle.s + 30;
     bool foundTargetObject = false;
     Vehicle object;
     Vehicle targetObject;
 
-    for (vector<Vehicle>::iterator it = sensorFusion.begin(); it != sensorFuson.end(); ++it){
+    for (vector<Vehicle>::const_iterator it = sensorFusion.begin(); it != sensorFusion.end(); ++it){
         object = *it;
         // choose the nearest one as target object
-        if (object.s <= minSTarget && object.s > this->s && object.l == l){
+        if (object.s <= minSTarget && object.s > vehicle.s && object.l == l){
             foundTargetObject = true;
             minSTarget = object.s;
             targetObject = object;
@@ -80,6 +84,6 @@ float laneSpeed(const Vehicle &Vehicle, const vector<Vehicle> &sensorFusion, int
         return targetObject.v;
     }
     else {
-        return 50.0 //target speed
+        return 50.0; //target speed
     }
 }

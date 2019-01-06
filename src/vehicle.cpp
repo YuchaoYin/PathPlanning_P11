@@ -8,11 +8,13 @@
 #include "cost.h"
 #include <limits>
 
+using namespace std;
+
 Vehicle::Vehicle(){
 
 }
 
-Vehicle::Vehicle(float s, float v, float a, int d, sdt::string state){
+Vehicle::Vehicle(float s, float v, float a, int d, string state){
     this->s = s;
     this->v = v;
     this->a = a;
@@ -165,14 +167,13 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
     }
 }
 
-bool Vehicle::selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle targetObject){
+bool Vehicle::selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle &targetObject){
     // assume we only consider the vehicles in front with s less than 30
     int minSTarget = this->s + 30;
     bool foundTargetObject = false;
     Vehicle object;
-    Vehicle targetObject;
 
-    for (vector<Vehicle>::iterator it = sensorFusion.begin(); it != sensorFuson.end(); ++it){
+    for (vector<Vehicle>::iterator it = sensorFusion.begin(); it != sensorFusion.end(); ++it){
         object = *it;
         // choose the nearest one as target object
         if (object.s <= minSTarget && object.s > this->s && object.l == l){

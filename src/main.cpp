@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "vehicle.h"
 #include "spline.h"
+#include <string>
 
 using namespace std;
 
@@ -215,7 +216,7 @@ int main() {
 
   //ego vehicle starts in lane 1 and lane driving
   int lane = 1;
-  std::string egoState = "laneDriving";
+  string egoState = "laneDriving";
   float refV = 0.0;
 
   h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane,&egoState,&refV](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
@@ -300,9 +301,9 @@ int main() {
                     float objectVy = sensor_fusion[i][4];
                     float objectSpeed = sqrt(objectVx*objectVx + objectVy*objectVy);
                     objectS += ((double)previousSize * 0.02 * objectSpeed);
-                    relativeS = objectS - car_s;
+                    float relativeS = objectS - car_s;
                     //assume safety distance is 30m
-                    if (relativeS > 0 && relativeS < 30){
+                    if (relativeS > 0. && relativeS < 30.){
                         tooClose = true;
                     }
                 }
@@ -361,8 +362,8 @@ int main() {
             spacedWaypointsY.push_back(nextWaypoint2[2]);
 
             for (size_t i = 0; i < spacedWaypointsX.size(); i++){
-                spacedWaypointsX[i] = (spacedWaypointsX[i] - refX) * cos(-refYaw) - (spacedWaypointsY - refY) * sin(-refYaw);
-                spacedWaypointsY[i] = (spacedWaypointsX[i] - refX) * sin(-refYaw) + (spacedWaypointsY - refY) * cos(-refYaw);
+                spacedWaypointsX[i] = (spacedWaypointsX[i] - refX) * cos(-refYaw) - (spacedWaypointsY[i] - refY) * sin(-refYaw);
+                spacedWaypointsY[i] = (spacedWaypointsX[i] - refX) * sin(-refYaw) + (spacedWaypointsY[i] - refY) * cos(-refYaw);
             }
 
             //-------------------------------------

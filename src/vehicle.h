@@ -1,7 +1,10 @@
 #ifndef VEHICLE_H
 #define VEHICLE_H
 
-#include
+#include <vector>
+#include <string>
+
+using namespace std;
 
 class Vehicle {
 
@@ -10,15 +13,15 @@ public:
     float v;
     float a;
     int l;
-    sdt::string state;
+    std::string state;
 
     Vehicle();
-    Vehicle(float s, float v, float a, int l, sdt::string state="KL");
-    virtual ~Vehicle;
+    Vehicle(float s, float v, float a, int l, string state = "laneDriving");
+    virtual ~Vehicle();
 
     vector<string> successorStates();
     vector<Vehicle> getBestTrajectory(vector<Vehicle> sensorFusion);
-    vector<Vehicle> generateTrajectory(std::string nextState, vector<Vehicle> sensorFusion);
-    vector<Vehicle> selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle targetObject);
-}
+    vector<Vehicle> generateTrajectory(string nextState, vector<Vehicle> sensorFusion);
+    bool selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle &targetObject);
+};
 #endif // VEHICLE_H
