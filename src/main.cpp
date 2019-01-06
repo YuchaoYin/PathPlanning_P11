@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
+#include "vehicle.h"
 
 using namespace std;
 
@@ -163,6 +164,17 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 
 }
 
+int lane_allocate(double d){
+    if(d>=0 && d<4){
+        return 0;
+    }
+    else if (d>=4 && d<8){
+        return 1;
+    }
+    else{
+        return 2;
+    }
+}
 int main() {
   uWS::Hub h;
 
@@ -200,7 +212,12 @@ int main() {
   	map_waypoints_dy.push_back(d_y);
   }
 
-  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  //ego vehicle starts in lane 1 and lane driving
+  int lane = 1;
+  std::string egoState = "laneDriving";
+  float refV = 0.0;
+
+  h.onMessage([&map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy,&lane,&egoState,&refV](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                      uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -236,6 +253,68 @@ int main() {
 
           	// Sensor Fusion Data, a list of all other cars on the same side of the road.
           	auto sensor_fusion = j[1]["sensor_fusion"];
+
+            //------------------------------------------------------------------------------------------------
+            int previousSize = previous_path_x.size();
+            if (previousSize > 0){
+                car_s = end_path_s;
+            }
+
+            Vehicle egoVehicle(car_s, car_speed, 0., lane, egoState);
+
+            //get all objects from sensor fusion data, format (id, x, y, vx, vy, s, d)
+            vector<Vehicle> sensorFusion;
+
+            for (size_t i = 0; i < sensor_fusion.size(); i++){
+                float objectS = sensor_fusion[i][5];
+                float objectD =sensor_fusion[i][6];
+                int objectL = lane_allocate(objectD);
+                float objectVx = sensor_fusion[i][3];
+                float objectVy = sensor_fusion[i][4];
+                float objectSpeed = sqrt(objectVx*objectVx + objectVy*objectVy);
+                objectS += ((double)previousSize * 0.02 * objectSpeed);
+
+                //assume other objects driving with constant velocity
+                sensorFusion.push_back(Vehicle(objectS, objectSpeed, 0., objectL));
+            }
+            //------------------------------------------------------------------------------------------------
+            //behavior planning
+            //choose next best trajectory
+            vector<Vehicle> bestTraj = egoVehicle.getBestTrajectory(sensorFusion);
+            lane = bestTraj[1].l;
+            egoState = bestTraj[1].state;
+
+
+            //------------------------------------------------------------------------------------------------
+            //motion planning
+            //check if the object in front is too close
+            bool tooClose = false;
+            for (size_t i = 0; i < sensor_fusion.size(); i++){
+                float objectD =sensor_fusion[i][6];
+                int objectL = lane_allocate(objectD);
+
+                if (objectL == lane){
+                    float objectS = sensor_fusion[i][5];
+                    float objectVx = sensor_fusion[i][3];
+                    float objectVy = sensor_fusion[i][4];
+                    float objectSpeed = sqrt(objectVx*objectVx + objectVy*objectVy);
+                    objectS += ((double)previousSize * 0.02 * objectSpeed);
+                    relativeS = objectS - car_s;
+                    //assume safety distance is 30m
+                    if (relativeS > 0 && relativeS < 30){
+                        tooClose = true;
+                    }
+                }
+            }
+
+            if (tooClose){
+                refV -= 0.224;
+            }
+            else if (refV < 50.0){
+                refV += 0.224;
+            }
+
+
 
           	json msgJson;
 
