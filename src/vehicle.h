@@ -21,7 +21,7 @@ public:
 
     vector<string> successorStates();
     vector<Vehicle> getBestTrajectory(vector<Vehicle> sensorFusion);
-    vector<Vehicle> generateTrajectory(string nextState, vector<Vehicle> sensorFusion);
+    vector<Vehicle> generateTrajectory(string state, vector<Vehicle> sensorFusion);
     bool selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle &targetObject);
 };
 #endif // VEHICLE_H

@@ -7,6 +7,7 @@
 #include <iterator>
 #include "cost.h"
 #include <limits>
+#include <assert.h>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ Vehicle::Vehicle(){
 
 }
 
-Vehicle::Vehicle(float s, float v, float a, int d, string state){
+Vehicle::Vehicle(float s, float v, float a, int l, string state){
     this->s = s;
     this->v = v;
     this->a = a;
@@ -30,7 +31,7 @@ Vehicle::~Vehicle(){
 vector<Vehicle> Vehicle::getBestTrajectory(vector<Vehicle> sensorFusion){
     //find all successor states
     vector<string> states = successorStates();
-
+    std::cout <<states.size()<< std::endl;
     float minCost = numeric_limits<float>::max();
     float cost;
     vector<Vehicle> bestTrajectory;
@@ -52,6 +53,8 @@ vector<Vehicle> Vehicle::getBestTrajectory(vector<Vehicle> sensorFusion){
 
 vector<string> Vehicle::successorStates(){
     vector<string> states;
+    //std::cout <<l<< std::endl;
+    states.push_back("laneDriving");
     if (state == "laneDriving"){
         states.push_back("laneDriving");
         if (l == 0){
@@ -79,9 +82,10 @@ vector<string> Vehicle::successorStates(){
             states.push_back("laneChangeLeft");
         }
     }
+    return states;
 }
 
-vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicle> sensorFusion){
+vector<Vehicle> Vehicle::generateTrajectory(string state, vector<Vehicle> sensorFusion){
     vector<Vehicle> trajectory = {Vehicle(this->s, this->v, this->a, this->l, this->state)};
     float nextVel;
     float nextPos;
@@ -92,7 +96,7 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
 
     setSpeed = 50.0;
 
-    if (nextState == "laneDriving"){
+    if (state == "laneDriving"){
         //generate trajectory of lane driving
         //select target object
         if (selectTargetObject(sensorFusion, this->l, targetObject)){
@@ -110,9 +114,9 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
         //trajectory
         trajectory.push_back(Vehicle(nextPos, nextVel, nextAccel, this->l, "laneDriving"));
     }
-    else if (nextState == "prepareLaneChangeRight" || nextState == "prepareLaneChangeLeft"){
+    else if (state == "prepareLaneChangeRight" || state == "prepareLaneChangeLeft"){
         //generate trajectory of prepare lane change
-        if (nextState == "prepareLaneChangeRight"){
+        if (state == "prepareLaneChangeRight"){
             nextLane = this->l + 1;
         }
         else{
@@ -139,12 +143,12 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
         nextPos = this->s + nextVel + nextAccel/2.0;
 
         //trajectory
-        trajectory.push_back(Vehicle(nextPos, nextVel, nextAccel, this->l, nextState));
+        trajectory.push_back(Vehicle(nextPos, nextVel, nextAccel, this->l, state));
 
     }
     else{
-        //generate trajectory of prepare lane change
-        if (nextState == "laneChangeRight"){
+        //generate trajectory of lane change
+        if (state == "laneChangeRight"){
             nextLane = this->l + 1;
         }
         else{
@@ -163,8 +167,9 @@ vector<Vehicle> Vehicle::generateTrajectory(std::string nextState, vector<Vehicl
         nextPos = this->s + nextVel + nextAccel/2.0;
 
         //trajectory
-        trajectory.push_back(Vehicle(nextPos, nextVel, nextAccel, nextLane, nextState));
+        trajectory.push_back(Vehicle(nextPos, nextVel, nextAccel, nextLane, state));
     }
+    return trajectory;
 }
 
 bool Vehicle::selectTargetObject(vector<Vehicle> sensorFusion, int l, Vehicle &targetObject){

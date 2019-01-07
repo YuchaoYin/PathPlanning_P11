@@ -11,6 +11,7 @@
 #include "vehicle.h"
 #include "spline.h"
 #include <string>
+#include <assert.h>
 
 using namespace std;
 
@@ -173,10 +174,11 @@ int lane_allocate(double d){
     else if (d>=4 && d<8){
         return 1;
     }
-    else{
+    else if (d>=8 && d<12){
         return 2;
     }
 }
+
 int main() {
   uWS::Hub h;
 
@@ -256,6 +258,7 @@ int main() {
           	// Sensor Fusion Data, a list of all other cars on the same side of the road.
           	auto sensor_fusion = j[1]["sensor_fusion"];
 
+
             //------------------------------------------------------------------------------------------------
             int previousSize = previous_path_x.size();
             if (previousSize > 0){
@@ -271,6 +274,7 @@ int main() {
                 float objectS = sensor_fusion[i][5];
                 float objectD =sensor_fusion[i][6];
                 int objectL = lane_allocate(objectD);
+               // std::cout << objectL<< std::endl;
                 float objectVx = sensor_fusion[i][3];
                 float objectVy = sensor_fusion[i][4];
                 float objectSpeed = sqrt(objectVx*objectVx + objectVy*objectVy);
@@ -279,6 +283,7 @@ int main() {
                 //assume other objects driving with constant velocity
                 sensorFusion.push_back(Vehicle(objectS, objectSpeed, 0., objectL));
             }
+            //std::cout << sensorFusion.size()<< std::endl;
             //------------------------------------------------------------------------------------------------
             //behavior planning
             //choose next best trajectory
@@ -286,6 +291,7 @@ int main() {
             lane = bestTraj[1].l;
             egoState = bestTraj[1].state;
 
+            std::cout << "Lane: " << lane <<" State: " << egoState << std::endl;
 
             //------------------------------------------------------------------------------------------------
             //motion planning
@@ -312,7 +318,7 @@ int main() {
             if (tooClose){
                 refV -= 0.224;
             }
-            else if (refV < 50.0){
+            else if (refV < 49.0){
                 refV += 0.224;
             }
 
@@ -325,14 +331,14 @@ int main() {
             double refYaw = deg2rad(car_yaw);
 
             if (previousSize < 2){
-                double previousCarX = refX - cos(car_yaw);
-                double previousCarY = refY - sin(car_yaw);
+                double previousCarX = car_x - cos(car_yaw);
+                double previousCarY = car_y - sin(car_yaw);
 
                 spacedWaypointsX.push_back(previousCarX);
-                spacedWaypointsX.push_back(refX);
+                spacedWaypointsX.push_back(car_x);
 
                 spacedWaypointsY.push_back(previousCarY);
-                spacedWaypointsY.push_back(refY);
+                spacedWaypointsY.push_back(car_y);
             }
             else {
                 refX = previous_path_x[previousSize - 1];
@@ -354,21 +360,26 @@ int main() {
             vector<double> nextWaypoint1 = getXY(car_s+60, 4*lane+2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
             vector<double> nextWaypoint2 = getXY(car_s+90, 4*lane+2, map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
-            spacedWaypointsX.push_back(nextWaypoint0[0]);
-            spacedWaypointsX.push_back(nextWaypoint1[1]);
-            spacedWaypointsX.push_back(nextWaypoint2[2]);
-            spacedWaypointsY.push_back(nextWaypoint0[0]);
-            spacedWaypointsY.push_back(nextWaypoint1[1]);
-            spacedWaypointsY.push_back(nextWaypoint2[2]);
 
+            spacedWaypointsX.push_back(nextWaypoint0[0]);
+            spacedWaypointsX.push_back(nextWaypoint1[0]);
+            spacedWaypointsX.push_back(nextWaypoint2[0]);
+            spacedWaypointsY.push_back(nextWaypoint0[1]);
+            spacedWaypointsY.push_back(nextWaypoint1[1]);
+            spacedWaypointsY.push_back(nextWaypoint2[1]);
+
+            std::cout << spacedWaypointsX.size()<< std::endl;
             for (size_t i = 0; i < spacedWaypointsX.size(); i++){
-                spacedWaypointsX[i] = (spacedWaypointsX[i] - refX) * cos(-refYaw) - (spacedWaypointsY[i] - refY) * sin(-refYaw);
-                spacedWaypointsY[i] = (spacedWaypointsX[i] - refX) * sin(-refYaw) + (spacedWaypointsY[i] - refY) * cos(-refYaw);
+                float xRel = spacedWaypointsX[i] - refX;
+                float yRel = spacedWaypointsY[i] - refY;
+                spacedWaypointsX[i] = xRel * cos(-refYaw) - yRel * sin(-refYaw);
+                spacedWaypointsY[i] = xRel * sin(-refYaw) + yRel * cos(-refYaw);
             }
 
             //-------------------------------------
             tk::spline spline;
             spline.set_points(spacedWaypointsX, spacedWaypointsY);
+
 
           	json msgJson;
 
@@ -385,11 +396,13 @@ int main() {
             float targetX = 30.0;
             float targetY = spline(targetX);
             float targetDistance = sqrt(targetX * targetX + targetY * targetY);
-            float n = targetDistance/(0.02 * refV / 2.24);
+
+
             float pointAdd = 0.0;
 
             //calculate points in front
             for (size_t i = 0; i <= 30 - previousSize; i++){
+                float n = targetDistance/(0.02 * refV / 2.24);
                 float pointX = pointAdd + targetX/n;
                 float pointY = spline(pointX);
                 pointAdd = pointX;
@@ -398,9 +411,13 @@ int main() {
                 pointX = xRef * cos(refYaw) - yRef * sin(refYaw);
                 pointY = xRef * sin(refYaw) + yRef * cos(refYaw);
 
+                pointX = pointX + refX;
+                pointY = pointY + refY;
+
                 next_x_vals.push_back(pointX);
                 next_y_vals.push_back(pointY);
             }
+
 
 
           	// TODO: define a path made up of (x,y) points that the car will visit sequentially every .02 seconds
