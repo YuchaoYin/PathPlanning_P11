@@ -7,24 +7,38 @@ The data format of each object (vehicle) is [id, x, y, vx, vy ,s, d]. The id is 
 
 ## Behavior Planner
 In the Behavior Planner, we have 5 states：
+
 **lane driving**
+
 logic: If there is target object available (we only consider 30 m ahead and choose the nearest object in front as our lane driving target object), the ego vehicle should drive following the target object. If there's no target object found, then driving with target speed.
+
 **prepare lane change right**
+
 logic: when the target object is driving slow, based on the cost function (described later in detail), the ego vehicle will be in prepare lane change state. The ego vehicle will choose the slower vehicle found in the ego lane and the target lane and slow down to the velocity of the slower vehicle. Until the target lane is leer for lane change (no car in front 15 m and behind 15 m on the target lane), then will shift the state to lane change.
+
 **prepare lane change left**
+
 logic: As described above.
+
 **lane change right**
+
 logic: After prepare lane change state and check if the lane change condition is fulfilled, if yes, then do the lane change.
+
 **lane change left**
+
 logic: As described above.
 
 ## Cost Function
 The cost function consists of two parts:
+
 **speedCost**
+
 The speed cost is calculated based on the target velocity.
 
 cost = (2.0 * targetVelocity - speedIntended - speedLane)/targetVelocity;
+
 **collisionCost**
+
 we only consider the collision when doing lane change. logic is, if there exists vehicles in the defined safety area (15 m in front and 15 m behind) on the target lane, then we consider the lane change action will cause collision.
 
 ## Motion Planner
