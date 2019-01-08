@@ -1,3 +1,44 @@
+# Project Report
+
+## Environment Model
+In this project, we simulate the environment in Unity and the surrounding objects saved in SensorFusion data (max 12 objects).
+
+The data format of each object (vehicle) is [id, x, y, vx, vy ,s, d]. The id is a unique identifier for that car. The x, y values are in global map coordinates, and the vx, vy values are the velocity components, also in reference to the global map. Finally s and d are the Frenet coordinates for that car.
+
+## Behavior Planner
+In the Behavior Planner, we have 5 states：
+**lane driving**
+logic: If there is target object available (we only consider 30 m ahead and choose the nearest object in front as our lane driving target object), the ego vehicle should drive following the target object. If there's no target object found, then driving with target speed.
+**prepare lane change right**
+logic: when the target object is driving slow, based on the cost function (described later in detail), the ego vehicle will be in prepare lane change state. The ego vehicle will choose the slower vehicle found in the ego lane and the target lane and slow down to the velocity of the slower vehicle. Until the target lane is leer for lane change (no car in front 15 m and behind 15 m on the target lane), then will shift the state to lane change.
+**prepare lane change left**
+logic: As described above.
+**lane change right**
+logic: After prepare lane change state and check if the lane change condition is fulfilled, if yes, then do the lane change.
+**lane change left**
+logic: As described above.
+
+## Cost Function
+The cost function consists of two parts:
+**speedCost**
+The speed cost is calculated based on the target velocity.
+
+cost = (2.0 * targetVelocity - speedIntended - speedLane)/targetVelocity;
+**collisionCost**
+we only consider the collision when doing lane change. logic is, if there exists vehicles in the defined safety area (15 m in front and 15 m behind) on the target lane, then we consider the lane change action will cause collision.
+
+## Motion Planner
+The motion planner takes the previous path into account in order to have a smooth transition from previous and mainly use splines and Frenet coordinates to generate the trajectory based on the target lane which calculated from behavior planner.
+
+Highlight: like emergency brake, we should also check if the front vehicle is too close to us. The deceleration and acceleration value has been tunned based on the performance. The rule is not to reach the max acc and max jerk.
+
+Final performance: The ego vehicle has been driven almost 8 minutes without any accidents :) and is able to change lanes and obeys the general limits.
+<p align="center">
+  <img src="./img/image.png" alt="screenshot">
+  <br>performance screenshot.
+</p>
+
+
 # CarND-Path-Planning-Project
 Self-Driving Car Engineer Nanodegree Program
    
