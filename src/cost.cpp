@@ -14,7 +14,7 @@ float calculateCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion,
     float weightsSpeed = 1.0;
     float weightsCollision = 1000.0;
 
-    cost = weightsCollision * collisionCost(vehicle, sensorFusion, trajectory) + weightsSpeed * collisionSpeed(vehicle, sensorFusion, trajectory);
+    cost = weightsCollision * collisionCost(vehicle, sensorFusion, trajectory) + weightsSpeed * speedCost(vehicle, sensorFusion, trajectory);
 
     return cost;
 }
@@ -40,7 +40,7 @@ float collisionCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion,
     return 0.;
 }
 
-float collisionSpeed(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
+float speedCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
     int targetLane = trajectory[1].l;
     float speedLane = laneSpeed(vehicle, sensorFusion, targetLane);
 
