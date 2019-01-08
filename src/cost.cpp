@@ -11,8 +11,8 @@ float calculateCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion,
 
     //consider speed cost and collision cost
     //define weights
-    float weightsSpeed = 10.0;
-    float weightsCollision = 10000.0;
+    float weightsSpeed = 1.0;
+    float weightsCollision = 1000.0;
 
     cost = weightsCollision * collisionCost(vehicle, sensorFusion, trajectory) + weightsSpeed * collisionSpeed(vehicle, sensorFusion, trajectory);
 
@@ -22,8 +22,8 @@ float calculateCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion,
 float collisionCost(const Vehicle &vehicle, const vector<Vehicle> &sensorFusion, const vector<Vehicle> &trajectory){
     //consider only lane change
     //define safety area
-    float minSafety = vehicle.s - 10.0;
-    float maxSafety = vehicle.s + 10.0;
+    float minSafety = vehicle.s - 15.0;
+    float maxSafety = vehicle.s + 15.0;
     Vehicle object;
     if (trajectory[1].state == "laneChangeRight" || trajectory[1].state == "laneChangeLeft" ){
         int targetLane = trajectory[1].l;

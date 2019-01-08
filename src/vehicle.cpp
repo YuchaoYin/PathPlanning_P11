@@ -31,7 +31,7 @@ Vehicle::~Vehicle(){
 vector<Vehicle> Vehicle::getBestTrajectory(vector<Vehicle> sensorFusion){
     //find all successor states
     vector<string> states = successorStates();
-    std::cout <<states.size()<< std::endl;
+    //std::cout <<states.size()<< std::endl;
     float minCost = numeric_limits<float>::max();
     float cost;
     vector<Vehicle> bestTrajectory;
@@ -56,7 +56,7 @@ vector<string> Vehicle::successorStates(){
     //std::cout <<l<< std::endl;
     states.push_back("laneDriving");
     if (state == "laneDriving"){
-        states.push_back("laneDriving");
+        //states.push_back("laneDriving");
         if (l == 0){
             states.push_back("prepareLaneChangeRight");
         }
@@ -69,14 +69,14 @@ vector<string> Vehicle::successorStates(){
         }
     }
     else if (state == "prepareLaneChangeRight"){
-        states.push_back("laneDriving");
+        //states.push_back("laneDriving");
         if (l != 2){
             states.push_back("prepareLaneChangeRight");
             states.push_back("laneChangeRight");
         }
     }
     else if (state == "prepareLaneChangeLeft"){
-        states.push_back("laneDriving");
+        //states.push_back("laneDriving");
         if (l != 0){
             states.push_back("prepareLaneChangeLeft");
             states.push_back("laneChangeLeft");

@@ -291,7 +291,7 @@ int main() {
             lane = bestTraj[1].l;
             egoState = bestTraj[1].state;
 
-            std::cout << "Lane: " << lane <<" State: " << egoState << std::endl;
+            std::cout << " Current State: " << egoState << std::endl;
 
             //------------------------------------------------------------------------------------------------
             //motion planning
@@ -308,18 +308,18 @@ int main() {
                     float objectSpeed = sqrt(objectVx*objectVx + objectVy*objectVy);
                     objectS += ((double)previousSize * 0.02 * objectSpeed);
                     float relativeS = objectS - car_s;
-                    //assume safety distance is 30m
-                    if (relativeS > 0. && relativeS < 30.){
+                    //assume safety distance is 25m
+                    if (relativeS > 0. && relativeS < 25.){
                         tooClose = true;
                     }
                 }
             }
 
             if (tooClose){
-                refV -= 0.224;
+                refV -= 0.8; // brake with strong deceleration
             }
-            else if (refV < 49.0){
-                refV += 0.224;
+            else if (refV < 49.5){
+                refV += 0.3;
             }
 
             //----------------------------
@@ -368,7 +368,7 @@ int main() {
             spacedWaypointsY.push_back(nextWaypoint1[1]);
             spacedWaypointsY.push_back(nextWaypoint2[1]);
 
-            std::cout << spacedWaypointsX.size()<< std::endl;
+            //std::cout << spacedWaypointsX.size()<< std::endl;
             for (size_t i = 0; i < spacedWaypointsX.size(); i++){
                 float xRel = spacedWaypointsX[i] - refX;
                 float yRel = spacedWaypointsY[i] - refY;
